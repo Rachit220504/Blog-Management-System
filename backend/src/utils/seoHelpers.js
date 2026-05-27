@@ -18,7 +18,7 @@ const validateSeoUrl = (value) => {
     return true;
   }
 
-  return validator.isURL(String(value), { require_protocol: true });
+  return validator.isURL(String(value), { require_protocol: true, allow_local: true, require_tld: false });
 };
 
 module.exports = {

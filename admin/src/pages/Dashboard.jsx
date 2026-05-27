@@ -19,6 +19,9 @@ const Dashboard = () => {
       const response = await dashboardApi.stats();
       return response.data.data;
     },
+    refetchInterval: 15000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: recentPosts } = useQuery({
@@ -33,7 +36,7 @@ const Dashboard = () => {
     { title: 'Total Articles', value: formatNumber(stats?.posts?.total), icon: FileText, tone: 'from-sky-500 to-cyan-400' },
     { title: 'Published', value: formatNumber(stats?.posts?.published), icon: Sparkles, tone: 'from-emerald-500 to-teal-400' },
     { title: 'Drafts', value: formatNumber(stats?.posts?.drafts), icon: CircleSlash2, tone: 'from-amber-500 to-orange-400' },
-    { title: 'Total Views', value: formatNumber(stats?.views), icon: Eye, tone: 'from-violet-500 to-fuchsia-400' },
+    { title: 'Live Views', value: formatNumber(stats?.views), icon: Eye, tone: 'from-violet-500 to-fuchsia-400', hint: 'Auto-refreshing analytics' },
   ];
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Copy, Upload, Trash2, ImagePlus } from 'lucide-react';
 import { mediaApi } from '../services/api';
@@ -10,11 +10,17 @@ import toast from 'react-hot-toast';
 const MediaLibrary = () => {
   const queryClient = useQueryClient();
   const [files, setFiles] = useState([]);
+  const [mediaItems, setMediaItems] = useState([]);
 
   const { data } = useQuery({
     queryKey: ['media-library'],
     queryFn: async () => (await mediaApi.list()).data,
+    refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    setMediaItems(data?.data || []);
+  }, [data]);
 
   const uploadMutation = useMutation({
     mutationFn: async (formData) => mediaApi.uploadGallery(formData),
@@ -28,7 +34,8 @@ const MediaLibrary = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (url) => mediaApi.remove(url),
-    onSuccess: () => {
+    onSuccess: (_response, deletedUrl) => {
+      setMediaItems((current) => current.filter((item) => item.url !== deletedUrl));
       toast.success('Media deleted');
       queryClient.invalidateQueries({ queryKey: ['media-library'] });
     },
@@ -47,7 +54,7 @@ const MediaLibrary = () => {
     toast.success('URL copied');
   };
 
-  const items = data?.data || [];
+  const items = mediaItems;
 
   return (
     <div className="space-y-6">

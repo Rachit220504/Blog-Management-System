@@ -1,5 +1,6 @@
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
+const { uploadDir } = require('../config/multer');
 const {
   generateUniqueFileName,
   optimizeImageBuffer,
@@ -73,11 +74,32 @@ const removeImage = async (fileUrlOrPath) => {
     return true;
   }
 
-  const absolutePath = path.isAbsolute(fileUrlOrPath)
-    ? fileUrlOrPath
-    : path.resolve(process.cwd(), 'public/uploads', path.basename(fileUrlOrPath));
+  const fileName = (() => {
+    try {
+      const parsedUrl = new URL(String(fileUrlOrPath), 'http://localhost');
+      return path.basename(decodeURIComponent(parsedUrl.pathname));
+    } catch {
+      return path.basename(String(fileUrlOrPath));
+    }
+  })();
 
-  return deleteLocalFile(absolutePath);
+  const candidatePaths = [
+    fileUrlOrPath,
+    path.resolve(process.cwd(), 'public/uploads', fileName),
+    path.resolve(uploadDir, fileName),
+  ].filter(Boolean);
+
+  for (const candidatePath of candidatePaths) {
+    const absoluteCandidate = path.isAbsolute(candidatePath)
+      ? candidatePath
+      : path.resolve(process.cwd(), candidatePath);
+
+    if (await deleteLocalFile(absoluteCandidate)) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 const buildMediaResponse = (fileInfo, label = 'image') => ({

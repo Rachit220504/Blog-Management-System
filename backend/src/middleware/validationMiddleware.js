@@ -67,7 +67,7 @@ const validateProfileUpdate = (req, res, next) => {
     return sendValidationError(res, 'Bio cannot exceed 200 characters');
   }
 
-  if (avatar !== undefined && avatar && !validator.isURL(String(avatar), { require_protocol: true })) {
+  if (avatar !== undefined && avatar && !validator.isURL(String(avatar), { require_protocol: true, allow_local: true, require_tld: false })) {
     return sendValidationError(res, 'Avatar must be a valid URL');
   }
 
@@ -139,9 +139,12 @@ const validatePostPayload = (req, res, next) => {
     return sendValidationError(res, 'Meta description cannot exceed 160 characters');
   }
 
-  if (canonicalUrl !== undefined && canonicalUrl && !validator.isURL(String(canonicalUrl), { require_protocol: true })) {
+  if (canonicalUrl !== undefined && canonicalUrl && !validator.isURL(String(canonicalUrl), { require_protocol: true, allow_local: true, require_tld: false })) {
     // Allow relative canonical URLs (starting with '/') — they'll be normalized server-side.
     if (!String(canonicalUrl).startsWith('/')) {
+      // Debug log to help trace validation failures during local development
+      // (will be removed once root cause is identified)
+      console.error('Canonical URL validation failed:', { canonicalUrl, isUrl: validator.isURL(String(canonicalUrl), { require_protocol: true, allow_local: true, require_tld: false }) });
       return sendValidationError(res, 'Canonical URL must be a valid URL');
     }
   }

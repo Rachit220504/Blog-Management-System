@@ -9,6 +9,7 @@ import PostMeta from '../../../components/post-meta';
 import SocialShare from '../../../components/social-share';
 import RelatedPosts from '../../../components/related-posts';
 import Breadcrumbs from '../../../components/breadcrumbs';
+import PageViewTracker from '../../../components/page-view-tracker';
 import { fetchPostBySlug, fetchAllPublishedPosts, getSiteUrl } from '../../../lib/api';
 import {
   buildTableOfContents,
@@ -104,6 +105,7 @@ export default async function BlogPostPage({ params }) {
 
   return (
     <article className="pb-16 pt-8 md:pt-14">
+      <PageViewTracker slug={post.slug} path={`/blog/${post.slug}`} />
       <ArticleJsonLd post={post} url={canonicalUrl} />
       <FaqJsonLd items={post.faq || []} url={canonicalUrl} />
       <BreadcrumbJsonLd items={breadcrumbItems} />

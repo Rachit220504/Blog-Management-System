@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const User = require('../models/User');
+const PageView = require('../models/PageView');
 const ApiResponse = require('../helpers/apiResponse');
 
 // @desc    Get dashboard metrics & analytics
@@ -19,16 +20,17 @@ const getDashboardStats = async (req, res, next) => {
     const publishedPosts = await Post.countDocuments({ ...postQuery, status: 'published' });
     const draftPosts = await Post.countDocuments({ ...postQuery, status: 'draft' });
 
-    // 2. Sum of views
-    const viewStats = await Post.aggregate([
-      {
-        $match: isAuthor
-          ? { author: new mongoose.Types.ObjectId(authorId) }
-          : {},
-      },
-      { $group: { _id: null, totalViews: { $sum: '$views' } } },
-    ]);
-    const totalViews = viewStats.length > 0 ? viewStats[0].totalViews : 0;
+    // 2. Sum of real page views captured from the frontend
+    const pageViewQuery = isAuthor
+      ? { author: new mongoose.Types.ObjectId(authorId) }
+      : {};
+
+    const totalViews = await PageView.countDocuments(pageViewQuery);
+
+    const recentPageViews = await PageView.find(pageViewQuery)
+      .populate('post', 'title slug')
+      .sort({ createdAt: -1 })
+      .limit(5);
 
     // 3. Recent posts (limit 5)
     const recentPosts = await Post.find(postQuery)
@@ -44,6 +46,7 @@ const getDashboardStats = async (req, res, next) => {
       },
       views: totalViews,
       recentPosts,
+      recentPageViews,
     };
 
     // 4. Global User Stats (Super Admin & Editor only)

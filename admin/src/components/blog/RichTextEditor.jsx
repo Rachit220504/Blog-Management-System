@@ -69,14 +69,22 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Write your story here.
         contentEditable
         suppressContentEditableWarning
         onInput={() => onChange(editorRef.current?.innerHTML || '')}
-        className="min-h-[380px] px-5 py-4 text-sm leading-7 text-slate-100 outline-none"
+        className="min-h-[380px] max-w-full overflow-hidden break-words whitespace-pre-wrap px-5 py-4 text-sm leading-7 text-slate-100 outline-none"
         data-placeholder={placeholder}
-        style={{ whiteSpace: 'pre-wrap' }}
+        style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' }}
       />
       <style>{`
         [contenteditable=true]:empty:before {
           content: attr(data-placeholder);
           color: #64748b;
+        }
+
+        [contenteditable=true],
+        [contenteditable=true] * {
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          white-space: pre-wrap;
+          max-width: 100%;
         }
       `}</style>
     </div>

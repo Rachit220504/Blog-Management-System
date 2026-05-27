@@ -43,13 +43,13 @@ export const fetchPublishedPosts = async ({ page = 1, limit = 9, search = '', ta
       ...(tag ? { tag } : {}),
       ...(category ? { category } : {}),
     },
-    next: { revalidate: 300 },
+    cache: 'no-store',
   });
 };
 
 export const fetchPostBySlug = async (slug) => {
   const response = await requestJson(`/posts/slug/${encodeURIComponent(slug)}`, {
-    next: { revalidate: 300 },
+    cache: 'no-store',
   });
   return response.data;
 };
@@ -57,7 +57,7 @@ export const fetchPostBySlug = async (slug) => {
 export const fetchAllPublishedPosts = async () => {
   const response = await requestJson('/posts', {
     params: { page: 1, limit: 1000 },
-    next: { revalidate: 600 },
+    cache: 'no-store',
   });
 
   return response.data || [];

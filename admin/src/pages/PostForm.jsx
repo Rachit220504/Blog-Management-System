@@ -11,7 +11,7 @@ import FormField, { inputClass } from '../components/ui/FormField';
 import RichTextEditor from '../components/blog/RichTextEditor';
 import SeoScoreCard from '../components/blog/SeoScoreCard';
 import PreviewModal from '../components/blog/PreviewModal';
-import { buildCanonicalUrlFromTitle, buildPreviewUrl, buildSlugFromText, estimateReadTime, isAutoCanonicalUrlManaged, resolveCanonicalUrl, resolveSlug, seoScoreFromPost, slugify, splitList } from '../utils/content';
+import { buildCanonicalUrlFromTitle, buildPreviewUrl, buildSlugFromText, estimateReadTime, isAutoCanonicalUrlManaged, isAutoSlugManaged, resolveCanonicalUrl, resolveSlug, seoScoreFromPost, slugify, splitList } from '../utils/content';
 import { validateBlogForm, validateSeoForm, validateUrl } from '../utils/validators';
 import toast from 'react-hot-toast';
 

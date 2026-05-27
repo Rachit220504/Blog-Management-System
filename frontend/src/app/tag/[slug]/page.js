@@ -1,4 +1,3 @@
-import { notFound } from 'next/navigation';
 import BlogCard from '../../../components/blog-card';
 import StructuredData from '../../../components/structured-data';
 import { createBreadcrumbSchema, getUniqueTags, slugify } from '../../../lib/content';
@@ -6,6 +5,13 @@ import { buildCanonicalUrl, createCollectionSchema, createPageMetadata } from '.
 import { fetchAllPublishedPosts } from '../../../lib/api';
 
 export const revalidate = 300;
+
+const humanizeSlug = (value = '') =>
+  String(value)
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 
 export async function generateStaticParams() {
   const posts = await fetchAllPublishedPosts().catch(() => []);
@@ -17,20 +23,12 @@ export async function generateMetadata({ params }) {
   const slug = resolvedParams.slug;
   const posts = await fetchAllPublishedPosts().catch(() => []);
   const tag = getUniqueTags(posts).find((item) => item.slug === slug);
-
-  if (!tag) {
-    return createPageMetadata({
-      title: 'Tag not found',
-      description: 'The requested tag could not be found.',
-      pathname: `/tag/${slug}`,
-      robots: { index: false, follow: false },
-    });
-  }
+  const tagName = tag?.name || humanizeSlug(slug);
 
   return createPageMetadata({
-    title: `${tag.name} Posts`,
-    description: `Explore the latest posts tagged with ${tag.name}.`,
-    pathname: `/tag/${tag.slug}`,
+    title: `${tagName} Posts`,
+    description: `Explore the latest posts tagged with ${tagName}.`,
+    pathname: `/tag/${slug}`,
   });
 }
 
@@ -41,21 +39,18 @@ export default async function TagPage({ params }) {
   const posts = await fetchAllPublishedPosts().catch(() => []);
   const tags = getUniqueTags(posts);
   const tag = tags.find((item) => item.slug === slug);
+  const tagName = tag?.name || humanizeSlug(slug);
 
-  if (!tag) {
-    notFound();
-  }
-
-  const filteredPosts = posts.filter((post) => (post.tags || []).some((item) => slugify(item) === tag.slug));
-  const canonicalUrl = buildCanonicalUrl(`/tag/${tag.slug}`);
+  const filteredPosts = posts.filter((post) => (post.tags || []).some((item) => slugify(item) === slug));
+  const canonicalUrl = buildCanonicalUrl(`/tag/${slug}`);
   const breadcrumbs = createBreadcrumbSchema([
     { name: 'Home', url: buildCanonicalUrl('/') },
     { name: 'Tags', url: buildCanonicalUrl('/search') },
-    { name: tag.name, url: canonicalUrl },
+    { name: tagName, url: canonicalUrl },
   ]);
   const schema = createCollectionSchema({
-    name: `${tag.name} Posts`,
-    description: `Browse published posts tagged with ${tag.name}.`,
+    name: `${tagName} Posts`,
+    description: `Browse published posts tagged with ${tagName}.`,
     url: canonicalUrl,
     itemCount: filteredPosts.length,
   });
@@ -66,7 +61,7 @@ export default async function TagPage({ params }) {
       <StructuredData data={schema} />
       <div className="panel rounded-[2rem] p-6 md:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">Tag</p>
-        <h1 className="mt-4 text-4xl font-semibold text-white md:text-5xl">{tag.name}</h1>
+        <h1 className="mt-4 text-4xl font-semibold text-white md:text-5xl">{tagName}</h1>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 md:text-base">
           {filteredPosts.length} published posts grouped under this tag.
         </p>
