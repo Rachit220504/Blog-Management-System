@@ -263,42 +263,42 @@ The project includes a production-focused SEO workflow across the public site an
 
 ## Screenshots
 
-All section screenshots are grouped below in one gallery.
+All section screenshots are grouped below in one gallery (images loaded from the `screenshots/` folder).
 
 <table>
   <tr>
-    <td><img src="screenshots/Screenshot%202026-05-04%20162719.png" alt="Screenshot 1" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-04%20172950.png" alt="Screenshot 2" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-04%20174910.png" alt="Screenshot 3" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191121.png" alt="Screenshot 1" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191133.png" alt="Screenshot 2" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191139.png" alt="Screenshot 3" width="100%" /></td>
   </tr>
   <tr>
-    <td><img src="screenshots/Screenshot%202026-05-04%20175550.png" alt="Screenshot 4" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-04%20184232.png" alt="Screenshot 5" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-04%20184239.png" alt="Screenshot 6" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191148.png" alt="Screenshot 4" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191214.png" alt="Screenshot 5" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191221.png" alt="Screenshot 6" width="100%" /></td>
   </tr>
   <tr>
-    <td><img src="screenshots/Screenshot%202026-05-06%20131852.png" alt="Screenshot 7" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-11%20200441.png" alt="Screenshot 8" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-11%20200507.png" alt="Screenshot 9" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191236.png" alt="Screenshot 7" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191249.png" alt="Screenshot 8" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191319.png" alt="Screenshot 9" width="100%" /></td>
   </tr>
   <tr>
-    <td><img src="screenshots/Screenshot%202026-05-11%20200522.png" alt="Screenshot 10" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-11%20200536.png" alt="Screenshot 11" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-11%20203832.png" alt="Screenshot 12" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191433.png" alt="Screenshot 10" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191446.png" alt="Screenshot 11" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191452.png" alt="Screenshot 12" width="100%" /></td>
   </tr>
   <tr>
-    <td><img src="screenshots/Screenshot%202026-05-20%20061628.png" alt="Screenshot 13" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-21%20174238.png" alt="Screenshot 14" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-21%20174701.png" alt="Screenshot 15" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191459.png" alt="Screenshot 13" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191507.png" alt="Screenshot 14" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191514.png" alt="Screenshot 15" width="100%" /></td>
   </tr>
   <tr>
-    <td><img src="screenshots/Screenshot%202026-05-21%20174722.png" alt="Screenshot 16" width="100%" /></td>
-    <td><img src="screenshots/Screenshot%202026-05-27%20145759.png" alt="Screenshot 17" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191521.png" alt="Screenshot 16" width="100%" /></td>
+    <td><img src="screenshots/Screenshot%202026-05-27%20191530.png" alt="Screenshot 17" width="100%" /></td>
     <td></td>
   </tr>
 </table>
 
-If you want section names under each image, rename the files to something descriptive and swap the `alt` text to match.
+If you'd like captions under each screenshot, tell me the preferred label for each file and I will add them.
 
 ## Useful Notes
 
