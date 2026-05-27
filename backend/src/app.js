@@ -25,14 +25,14 @@ app.use(loggerMiddleware);
 // This maps the URL path /uploads directly to the public/uploads filesystem directory
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
-// Apply rate limiting to all API requests
+// Apply rate limiting to all API requests under /api
 app.use('/api', apiLimiter);
 
-// Versioned API Route definitions
-app.use('/api/v1', apiLimiter, apiV1Routes);
+// Versioned API Route definitions (mounted without re-applying limiter)
+app.use('/api/v1', apiV1Routes);
 
 // Backward-compatible alias for existing clients
-app.use('/api', apiLimiter, apiV1Routes);
+app.use('/api', apiV1Routes);
 
 // Root path diagnostic route
 app.get('/', (req, res) => {

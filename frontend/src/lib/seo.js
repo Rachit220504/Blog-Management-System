@@ -19,10 +19,11 @@ export const createPageMetadata = ({
   image,
   keywords = [],
   robots,
+  canonicalUrl,
   type = 'website',
   siteName = 'Atlas Blog',
 }) => {
-  const canonicalUrl = buildCanonicalUrl(pathname);
+  const resolvedCanonicalUrl = canonicalUrl || buildCanonicalUrl(pathname);
   const hasImage = Boolean(image);
   const resolvedImageAlt = image ? `${title} - Open Graph image` : undefined;
 
@@ -31,12 +32,12 @@ export const createPageMetadata = ({
     description,
     keywords,
     alternates: {
-      canonical: canonicalUrl,
+      canonical: resolvedCanonicalUrl,
     },
     openGraph: {
       title,
       description,
-      url: canonicalUrl,
+      url: resolvedCanonicalUrl,
       type,
       siteName,
       images: hasImage

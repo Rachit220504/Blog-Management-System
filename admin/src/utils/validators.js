@@ -3,8 +3,8 @@ export const validateEmail = (value = '') => /.+@.+\..+/.test(String(value).trim
 export const validateUrl = (value = '') => {
   if (!value) return true;
   try {
-    new URL(value);
-    return true;
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
   } catch {
     return false;
   }
@@ -40,7 +40,15 @@ export const validateSeoForm = (values) => {
 
   if (!values.metaTitle?.trim()) errors.metaTitle = 'Meta title is required';
   if (!values.metaDescription?.trim()) errors.metaDescription = 'Meta description is required';
-  if (values.canonicalUrl && !validateUrl(values.canonicalUrl)) errors.canonicalUrl = 'Canonical URL must be valid';
+  const canonicalToValidate = values.canonicalUrl || `http://localhost:3000/blog/${String(values.metaTitle || values.title || 'post')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-_]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')}`;
+
+  if (!validateUrl(canonicalToValidate)) errors.canonicalUrl = 'Canonical URL must be valid';
 
   return errors;
 };

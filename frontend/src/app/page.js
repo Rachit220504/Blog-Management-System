@@ -2,17 +2,47 @@ import Link from 'next/link';
 import { ArrowRight, BookOpen, Sparkles, ShieldCheck, Search, ListChecks } from 'lucide-react';
 import BlogCard from '../components/blog-card';
 import { fetchPublishedPosts, fetchCategories, fetchTags } from '../lib/api';
-import { createPageMetadata, buildCanonicalUrl } from '../lib/seo';
+import { createPageMetadata, buildCanonicalUrl, createCollectionSchema } from '../lib/seo';
 import { createBreadcrumbSchema, getUniqueAuthors } from '../lib/content';
 import StructuredData from '../components/structured-data';
 import Breadcrumbs from '../components/breadcrumbs';
+import Pagination from '../components/pagination';
 
-export async function generateMetadata() {
+const POSTS_PER_PAGE = 12;
+
+const buildQueryString = (params = {}) => {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  return searchParams.toString();
+};
+
+const buildHomeCanonical = ({ page, search, tag }) => {
+  const query = buildQueryString({ page: page > 1 ? page : '', search, tag });
+  return query ? `${buildCanonicalUrl('/')}?${query}` : buildCanonicalUrl('/');
+};
+
+export async function generateMetadata({ searchParams }) {
+  const resolvedSearchParams = await Promise.resolve(searchParams || {});
+  const page = Math.max(1, Number(resolvedSearchParams.page || 1));
+  const search = String(resolvedSearchParams.search || '').trim();
+  const tag = String(resolvedSearchParams.tag || '').trim();
+  const filtered = Boolean(search || tag);
+  const titleSuffix = page > 1 ? ` - Page ${page}` : '';
+
   return createPageMetadata({
-    title: 'Atlas Blog',
-    description:
-      'Production-ready blog publishing with SEO architecture, structured data, and editorial workflows.',
+    title: `Atlas Blog${titleSuffix}`,
+    description: filtered
+      ? 'Browse and filter published Atlas Blog posts with SEO-first architecture, structured data, and editorial workflows.'
+      : 'Production-ready blog publishing with SEO architecture, structured data, and editorial workflows.',
     pathname: '/',
+    canonicalUrl: buildHomeCanonical({ page, search, tag }),
+    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
   });
 }
 
@@ -24,26 +54,35 @@ const highlights = [
 
 export default async function Home({ searchParams }) {
   const resolvedSearchParams = await Promise.resolve(searchParams || {});
-  const page = Number(resolvedSearchParams.page || 1);
-  const search = resolvedSearchParams.search || '';
-  const tag = resolvedSearchParams.tag || '';
+  const page = Math.max(1, Number(resolvedSearchParams.page || 1));
+  const search = String(resolvedSearchParams.search || '').trim();
+  const tag = String(resolvedSearchParams.tag || '').trim();
 
-  const fallbackPostsResponse = { data: [], pagination: { total: 0, page, pages: 0, limit: 9 } };
+  const fallbackPostsResponse = { data: [], pagination: { total: 0, page, pages: 0, limit: POSTS_PER_PAGE } };
   const [postsResponse, categories, tags] = await Promise.all([
-    fetchPublishedPosts({ page, limit: 9, search, tag }).catch(() => fallbackPostsResponse),
+    fetchPublishedPosts({ page, limit: POSTS_PER_PAGE, search, tag }).catch(() => fallbackPostsResponse),
     fetchCategories().catch(() => []),
     fetchTags().catch(() => []),
   ]);
 
   const posts = postsResponse.data || [];
+  const pagination = postsResponse.pagination || fallbackPostsResponse.pagination;
   const authors = getUniqueAuthors(posts);
   const featuredPost = posts[0] || null;
   const remainingPosts = posts.slice(1);
   const breadcrumbSchema = createBreadcrumbSchema([{ name: 'Home', url: buildCanonicalUrl('/') }]);
+  const collectionSchema = createCollectionSchema({
+    name: 'Atlas Blog',
+    description: 'SEO-first blog archive with published articles, structured data, and editorial workflows.',
+    url: buildHomeCanonical({ page, search, tag }),
+    itemCount: pagination.total || posts.length,
+  });
+  const currentFilters = { page: page > 1 ? page : '', search, tag };
 
   return (
     <div className="pb-16 pt-10 md:pt-16">
       <StructuredData data={breadcrumbSchema} />
+      <StructuredData data={collectionSchema} />
       <section className="site-shell">
         <div className="panel overflow-hidden rounded-[2rem] px-6 py-10 md:px-10 md:py-14 lg:px-14">
           <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -100,7 +139,7 @@ export default async function Home({ searchParams }) {
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <div className="text-xs uppercase tracking-[0.24em] text-cyan-200">Live content feed</div>
-                    <div className="mt-1 text-xl font-semibold text-white">{postsResponse.pagination?.total || 0} published posts</div>
+                    <div className="mt-1 text-xl font-semibold text-white">{pagination.total || 0} published posts</div>
                   </div>
                   <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200">
                     Published
@@ -153,6 +192,18 @@ export default async function Home({ searchParams }) {
         </div>
 
         <div className="panel rounded-[1.75rem] p-6 md:p-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">Latest posts</div>
+              <h2 className="mt-2 text-2xl font-semibold text-white md:text-3xl">Browse the current archive page</h2>
+            </div>
+            {(search || tag) ? (
+              <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                Filtered results
+              </div>
+            ) : null}
+          </div>
+
           <div className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-200">Search filters</div>
           <form className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
@@ -173,13 +224,26 @@ export default async function Home({ searchParams }) {
           </form>
 
           <div id="latest" className="mt-6 space-y-4">
-            {remainingPosts.length ? (
-              remainingPosts.map((post) => (
-                <BlogCard key={post._id} post={post} />
-              ))
+            {posts.length ? (
+              <>
+                {remainingPosts.length ? (
+                  <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-2">
+                    {remainingPosts.map((post) => (
+                      <BlogCard key={post._id} post={post} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/50 p-8 text-sm text-slate-400">
+                    {featuredPost
+                      ? 'This page only contains the featured post. Use pagination to browse more published articles.'
+                      : 'No posts matched your current filters.'}
+                  </div>
+                )}
+                <Pagination basePath="/" currentPage={page} totalPages={pagination.pages || 1} searchParams={currentFilters} />
+              </>
             ) : (
               <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/50 p-8 text-sm text-slate-400">
-                No additional posts matched your filters.
+                {search || tag ? 'No posts matched your current filters.' : 'No additional posts matched your filters.'}
               </div>
             )}
           </div>
@@ -193,6 +257,19 @@ export default async function Home({ searchParams }) {
                 </Link>
               ))}
             </div>
+
+            {tags.length ? (
+              <>
+                <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-200">Trending tags</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {tags.slice(0, 8).map((tagItem) => (
+                    <Link key={tagItem} href={`/?tag=${encodeURIComponent(tagItem)}`} className="rounded-full border border-emerald-400/10 bg-emerald-400/8 px-3 py-1 text-xs text-emerald-100 transition hover:border-emerald-300/25 hover:bg-emerald-400/12">
+                      {tagItem}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       </section>

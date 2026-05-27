@@ -13,14 +13,16 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
+  const resolvedParams = await Promise.resolve(params || {});
+  const slug = resolvedParams.slug;
   const posts = await fetchAllPublishedPosts().catch(() => []);
-  const category = getUniqueCategories(posts).find((item) => item.slug === params.slug);
+  const category = getUniqueCategories(posts).find((item) => item.slug === slug);
 
   if (!category) {
     return createPageMetadata({
       title: 'Category not found',
       description: 'The requested category could not be found.',
-      pathname: `/category/${params.slug}`,
+      pathname: `/category/${slug}`,
       robots: { index: false, follow: false },
     });
   }
@@ -33,9 +35,12 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function CategoryPage({ params }) {
+  const resolvedParams = await Promise.resolve(params || {});
+  const slug = resolvedParams.slug;
+
   const posts = await fetchAllPublishedPosts().catch(() => []);
   const categories = getUniqueCategories(posts);
-  const category = categories.find((item) => item.slug === params.slug);
+  const category = categories.find((item) => item.slug === slug);
 
   if (!category) {
     notFound();

@@ -11,15 +11,40 @@ process.on('uncaughtException', (err) => {
 
 const PORT = process.env.PORT || 5000;
 
+const listenWithFallbackPort = (startPort, maxAttempts = 10) => {
+  let currentPort = Number(startPort);
+  let attempts = 0;
+
+  return new Promise((resolve, reject) => {
+    const tryListen = () => {
+      const server = app.listen(currentPort, () => {
+        resolve({ server, port: currentPort });
+      });
+
+      server.once('error', (err) => {
+        if (err.code === 'EADDRINUSE' && attempts < maxAttempts) {
+          attempts += 1;
+          currentPort += 1;
+          console.warn(`Port ${currentPort - 1} is in use. Retrying on port ${currentPort}...`);
+          return tryListen();
+        }
+
+        reject(err);
+      });
+    };
+
+    tryListen();
+  });
+};
+
 const startServer = async () => {
   try {
     await connectDB();
 
-    const server = app.listen(PORT, () => {
-      console.log(
-        `Server running in ${process.env.NODE_ENV} mode on port http://localhost:${PORT}`
-      );
-    });
+    const { server, port } = await listenWithFallbackPort(PORT, 20);
+    console.log(
+      `Server running in ${process.env.NODE_ENV} mode on port http://localhost:${port}`
+    );
 
     process.on('unhandledRejection', (err) => {
       console.error('UNHANDLED REJECTION! Shutting down gracefully...');

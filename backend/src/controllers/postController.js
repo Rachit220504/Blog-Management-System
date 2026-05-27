@@ -57,18 +57,16 @@ const getPosts = async (req, res, next) => {
 // @access  Public
 const getPostBySlug = async (req, res, next) => {
   try {
-    const post = await Post.findOne({
-      slug: req.params.slug,
-      status: 'published',
-    }).populate('author', 'name avatar bio');
+    // Use an atomic increment to avoid race conditions under high concurrency
+    const post = await Post.findOneAndUpdate(
+      { slug: req.params.slug, status: 'published' },
+      { $inc: { views: 1 } },
+      { new: true }
+    ).populate('author', 'name avatar bio');
 
     if (!post) {
       return ApiResponse.error(res, 'Blog post not found', 404);
     }
-
-    // Increment views asynchronously
-    post.views += 1;
-    await post.save();
 
     return res.status(200).json({
       success: true,

@@ -26,13 +26,15 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
-  const post = await fetchPostBySlug(params.slug).catch(() => null);
+  const resolvedParams = await Promise.resolve(params || {});
+  const slug = resolvedParams.slug;
+  const post = await fetchPostBySlug(slug).catch(() => null);
 
   if (!post) {
     return createPageMetadata({
       title: 'Post not found',
       description: 'The requested post could not be located.',
-      pathname: `/blog/${params.slug}`,
+      pathname: `/blog/${slug}`,
       robots: { index: false, follow: false },
     });
   }
@@ -49,8 +51,11 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function BlogPostPage({ params }) {
+  const resolvedParams = await Promise.resolve(params || {});
+  const slug = resolvedParams.slug;
+
   const [post, allPosts] = await Promise.all([
-    fetchPostBySlug(params.slug).catch(() => null),
+    fetchPostBySlug(slug).catch(() => null),
     fetchAllPublishedPosts().catch(() => []),
   ]);
 
@@ -64,7 +69,7 @@ export default async function BlogPostPage({ params }) {
   const readingTime = post.readTime || estimateReadingTime(post.content);
   const breadcrumbItems = [
     { name: 'Home', url: buildCanonicalUrl('/') },
-    { name: 'Blog', url: buildCanonicalUrl('/') },
+    { name: 'Blog', url: buildCanonicalUrl('/blog') },
     { name: post.title, url: canonicalUrl },
   ];
   const relatedPosts = allPosts

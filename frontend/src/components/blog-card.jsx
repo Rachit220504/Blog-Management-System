@@ -6,10 +6,16 @@ import { slugify } from '../lib/content';
 import { createAltTextFallback } from '../lib/seo-tools';
 
 export default function BlogCard({ post, featured = false }) {
-  const href = `/blog/${post.slug}`;
-  const readingTime = post.readTime || estimateReadingTime(post.content || post.summary || '');
-  const firstCategory = post.categories?.[0];
-  const authorSlug = slugify(post.author?.slug || post.author?.name || 'author');
+  const safePost = post || {};
+  const href = safePost.slug ? `/blog/${safePost.slug}` : '/';
+  const title = safePost.title || 'Untitled post';
+  const summary = safePost.summary || safePost.excerpt || '';
+  const readingTime = safePost.readTime || estimateReadingTime(safePost.content || summary);
+  const firstCategory = Array.isArray(safePost.categories) ? safePost.categories[0] : null;
+  const authorName = typeof safePost.author === 'object' ? safePost.author?.name : '';
+  const authorSlug = slugify(
+    typeof safePost.author === 'object' ? safePost.author?.slug || safePost.author?.name || 'author' : 'author'
+  );
 
   return (
     <article
@@ -18,17 +24,18 @@ export default function BlogCard({ post, featured = false }) {
       }`}
     >
       <div className="relative min-h-56 overflow-hidden bg-slate-900/80 sm:min-h-64">
-        {post.featuredImage ? (
+        {safePost.featuredImage ? (
           <Image
-            src={post.featuredImage}
+            src={safePost.featuredImage}
             alt={createAltTextFallback({
-              title: post.title,
-              category: post.categories?.[0],
-              keywords: post.keywords,
-              src: post.featuredImage,
+              title,
+              category: firstCategory,
+              keywords: safePost.keywords,
+              src: safePost.featuredImage,
             })}
             fill
-            sizes="(max-width: 768px) 100vw, 50vw"
+            priority={featured}
+            sizes={featured ? '(max-width: 1024px) 100vw, 50vw' : '(max-width: 768px) 100vw, 33vw'}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
@@ -37,10 +44,10 @@ export default function BlogCard({ post, featured = false }) {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 px-4 py-3 text-[11px] text-slate-200 sm:px-5 sm:py-4 sm:text-xs">
           <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 backdrop-blur">
-            {post.status === 'published' ? 'Live' : 'Draft'}
+            {safePost.status === 'published' ? 'Live' : 'Draft'}
           </span>
           <span className="mono rounded-full border border-white/10 bg-black/25 px-3 py-1 backdrop-blur">
-            /{post.slug}
+            /{safePost.slug || 'post'}
           </span>
         </div>
       </div>
@@ -53,7 +60,7 @@ export default function BlogCard({ post, featured = false }) {
                 {firstCategory}
               </Link>
             ) : null}
-            {(post.tags || []).slice(0, 4).map((tag) => (
+            {(Array.isArray(safePost.tags) ? safePost.tags : []).slice(0, 4).map((tag) => (
               <Link key={tag} href={`/tag/${slugify(tag)}`} className="rounded-full border border-cyan-400/15 bg-cyan-400/8 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-cyan-100 transition hover:border-cyan-300/25 hover:bg-cyan-400/12">
                 {tag}
               </Link>
@@ -62,12 +69,12 @@ export default function BlogCard({ post, featured = false }) {
 
           <Link href={href} className="block">
             <h2 className={`font-semibold tracking-tight text-white transition-colors group-hover:text-cyan-100 ${featured ? 'text-2xl sm:text-3xl md:text-4xl' : 'text-xl sm:text-2xl'}`}>
-              {post.title}
+              {title}
             </h2>
           </Link>
 
           <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-            {post.summary}
+            {summary}
           </p>
         </div>
 
@@ -75,16 +82,16 @@ export default function BlogCard({ post, featured = false }) {
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <span className="inline-flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-cyan-300" />
-              {formatPublishedDate(post.publishedAt || post.createdAt)}
+              {formatPublishedDate(safePost.publishedAt || safePost.createdAt)}
             </span>
             <span className="inline-flex items-center gap-2">
               <Clock3 className="h-4 w-4 text-amber-300" />
               {readingTime} min read
             </span>
-            {post.author?.name ? (
+            {authorName ? (
               <Link href={`/author/${authorSlug}`} className="inline-flex items-center gap-2 transition-colors hover:text-white">
                 <span className="h-2 w-2 rounded-full bg-emerald-300" />
-                {post.author.name}
+                {authorName}
               </Link>
             ) : null}
           </div>

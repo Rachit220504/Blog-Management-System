@@ -48,3 +48,53 @@ export const buildPreviewUrl = (slug) => {
   const base = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3000';
   return `${base.replace(/\/$/, '')}/blog/${slug}`;
 };
+
+export const buildSlugFromText = (value = '') => slugify(value || 'post');
+
+export const buildCanonicalUrlFromTitle = (value = '') => buildPreviewUrl(slugify(value || 'post'));
+
+export const isAbsoluteHttpUrl = (value = '') => {
+  try {
+    const url = new URL(String(value));
+    return ['http:', 'https:'].includes(url.protocol);
+  } catch {
+    return false;
+  }
+};
+
+export const resolveCanonicalUrl = ({ canonicalUrl, metaTitle, title } = {}) => {
+  if (canonicalUrl && isAbsoluteHttpUrl(canonicalUrl)) {
+    return canonicalUrl;
+  }
+
+  return buildCanonicalUrlFromTitle(metaTitle || title);
+};
+
+export const resolveSlug = ({ slug, title, metaTitle } = {}) => {
+  if (slug && slugify(slug) === slug) {
+    return slug;
+  }
+
+  return buildSlugFromText(metaTitle || title);
+};
+
+export const isAutoSlugManaged = (slug = '', values = []) => {
+  if (!slug) return true;
+
+  return values
+    .filter(Boolean)
+    .some((value) => slug === buildSlugFromText(value));
+};
+
+export const isAutoCanonicalUrl = (canonicalUrl = '', value = '') => {
+  if (!canonicalUrl) return true;
+  return canonicalUrl === buildCanonicalUrlFromTitle(value);
+};
+
+export const isAutoCanonicalUrlManaged = (canonicalUrl = '', values = []) => {
+  if (!canonicalUrl) return true;
+
+  return values
+    .filter(Boolean)
+    .some((value) => canonicalUrl === buildCanonicalUrlFromTitle(value));
+};

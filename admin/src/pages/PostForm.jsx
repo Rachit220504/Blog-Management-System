@@ -11,7 +11,7 @@ import FormField, { inputClass } from '../components/ui/FormField';
 import RichTextEditor from '../components/blog/RichTextEditor';
 import SeoScoreCard from '../components/blog/SeoScoreCard';
 import PreviewModal from '../components/blog/PreviewModal';
-import { buildPreviewUrl, estimateReadTime, seoScoreFromPost, slugify, splitList } from '../utils/content';
+import { buildCanonicalUrlFromTitle, buildPreviewUrl, buildSlugFromText, estimateReadTime, isAutoCanonicalUrlManaged, resolveCanonicalUrl, resolveSlug, seoScoreFromPost, slugify, splitList } from '../utils/content';
 import { validateBlogForm, validateSeoForm, validateUrl } from '../utils/validators';
 import toast from 'react-hot-toast';
 
@@ -54,7 +54,7 @@ const PostForm = () => {
     if (post) {
       setForm({
         title: post.title || '',
-        slug: post.slug || '',
+        slug: post.slug || buildSlugFromText(post.metaTitle || post.title),
         summary: post.summary || post.excerpt || '',
         content: post.content || '',
         featuredImage: post.featuredImage || post.featureImage || '',
@@ -63,7 +63,7 @@ const PostForm = () => {
         categories: (post.categories || []).join(', '),
         metaTitle: post.metaTitle || '',
         metaDescription: post.metaDescription || '',
-        canonicalUrl: post.canonicalUrl || '',
+        canonicalUrl: post.canonicalUrl || buildCanonicalUrlFromTitle(post.metaTitle || post.title),
         keywords: (post.keywords || []).join(', '),
         ogTitle: post.ogTitle || '',
         ogDescription: post.ogDescription || '',
@@ -105,8 +105,13 @@ const PostForm = () => {
 
   const publishMutation = useMutation({
     mutationFn: async () => {
+      // For existing posts, call the dedicated publish endpoint to avoid full payload validation errors.
+      if (isEdit) {
+        return postsApi.publish(id);
+      }
+
       const payload = buildPayload('published');
-      return isEdit ? postsApi.update(id, payload) : postsApi.create(payload);
+      return postsApi.create(payload);
     },
     onSuccess: () => {
       toast.success('Published successfully');
@@ -118,7 +123,11 @@ const PostForm = () => {
 
   const buildPayload = (nextStatus = form.status) => ({
     title: form.title.trim(),
-    slug: slugify(form.slug || form.title),
+    slug: resolveSlug({
+      slug: form.slug,
+      title: form.title,
+      metaTitle: form.metaTitle || form.title,
+    }),
     summary: form.summary.trim(),
     content: form.content,
     status: nextStatus,
@@ -128,7 +137,11 @@ const PostForm = () => {
     categories: splitList(form.categories),
     metaTitle: form.metaTitle || form.title,
     metaDescription: form.metaDescription || form.summary,
-    canonicalUrl: form.canonicalUrl || buildPreviewUrl(slugify(form.slug || form.title)),
+    canonicalUrl: resolveCanonicalUrl({
+      canonicalUrl: form.canonicalUrl,
+      metaTitle: form.metaTitle || form.title,
+      title: form.title,
+    }),
     keywords: splitList(form.keywords),
     ogTitle: form.ogTitle || form.metaTitle || form.title,
     ogDescription: form.ogDescription || form.metaDescription || form.summary,
@@ -136,6 +149,45 @@ const PostForm = () => {
   });
 
   const handleField = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
+
+  const handleTitleChange = (event) => {
+    const nextTitle = event.target.value;
+
+    setForm((current) => {
+      const nextState = {
+        ...current,
+        title: nextTitle,
+        slug: buildSlugFromText(nextTitle || current.metaTitle || current.title),
+        canonicalUrl: buildCanonicalUrlFromTitle(nextTitle || current.metaTitle || current.title),
+      };
+
+      return nextState;
+    });
+  };
+
+  const handleMetaTitleChange = (event) => {
+    const nextMetaTitle = event.target.value;
+
+    setForm((current) => {
+      const nextState = {
+        ...current,
+        metaTitle: nextMetaTitle,
+        slug: buildSlugFromText(nextMetaTitle || current.title),
+        canonicalUrl: buildCanonicalUrlFromTitle(nextMetaTitle || current.title),
+      };
+
+      return nextState;
+    });
+  };
+
+  const handleCanonicalChange = (event) => {
+    const nextCanonicalUrl = event.target.value;
+
+    setForm((current) => ({
+      ...current,
+      canonicalUrl: nextCanonicalUrl,
+    }));
+  };
 
   const handleUpload = async (event) => {
     const file = event.target.files?.[0];
@@ -165,6 +217,9 @@ const PostForm = () => {
   };
 
   const previewData = buildPayload(form.status);
+  const canonicalStatus = isAutoCanonicalUrlManaged(form.canonicalUrl, [form.metaTitle, form.title])
+    ? `Auto-generated from ${form.metaTitle ? 'meta title' : 'title'}`
+    : 'Manually edited';
 
   return (
     <div className="space-y-6">
@@ -216,9 +271,9 @@ const PostForm = () => {
                 <>
                   <div className="grid gap-4 lg:grid-cols-2">
                     <FormField label="Title" error={errors.title} required>
-                      <input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value, slug: current.slug || slugify(event.target.value) }))} className={inputClass} placeholder="A clear, search-friendly title" />
+                      <input value={form.title} onChange={handleTitleChange} className={inputClass} placeholder="A clear, search-friendly title" />
                     </FormField>
-                    <FormField label="Slug" error={errors.slug} required>
+                    <FormField label="Slug" error={errors.slug} required hint={isAutoSlugManaged(form.slug, [form.title, form.metaTitle]) ? 'Auto-generated from title/meta title' : 'Manually edited'}>
                       <input value={form.slug} onChange={handleField('slug')} className={inputClass} placeholder="seo-friendly-url" />
                     </FormField>
                   </div>
@@ -256,10 +311,10 @@ const PostForm = () => {
               {activeTab === 'seo' && (
                 <div className="grid gap-4 lg:grid-cols-2">
                   <FormField label="Meta Title" error={errors.metaTitle} required>
-                    <input value={form.metaTitle} onChange={handleField('metaTitle')} className={inputClass} placeholder="Primary SEO title" />
+                    <input value={form.metaTitle} onChange={handleMetaTitleChange} className={inputClass} placeholder="Primary SEO title" />
                   </FormField>
-                  <FormField label="Canonical URL" error={errors.canonicalUrl}>
-                    <input value={form.canonicalUrl} onChange={handleField('canonicalUrl')} className={inputClass} placeholder="https://your-site.com/blog/my-post" />
+                  <FormField label="Canonical URL" error={errors.canonicalUrl} hint={canonicalStatus}>
+                    <input value={form.canonicalUrl} onChange={handleCanonicalChange} className={inputClass} placeholder="https://your-site.com/blog/my-post" />
                   </FormField>
                   <FormField label="Meta Description" error={errors.metaDescription} required>
                     <textarea rows={4} value={form.metaDescription} onChange={handleField('metaDescription')} className={inputClass} placeholder="Search snippet description" />

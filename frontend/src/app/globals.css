@@ -65,19 +65,19 @@ a {
 }
 
 .site-shell {
-  width: min(1120px, calc(100% - 1.5rem));
+  width: min(1440px, calc(100% - 1rem));
   margin: 0 auto;
 }
 
 @media (min-width: 640px) {
   .site-shell {
-    width: min(1120px, calc(100% - 2rem));
+    width: min(1440px, calc(100% - 1.5rem));
   }
 }
 
 @media (min-width: 1024px) {
   .site-shell {
-    width: min(1120px, calc(100% - 3rem));
+    width: min(1440px, calc(100% - 2rem));
   }
 }
 

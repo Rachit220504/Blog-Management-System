@@ -55,7 +55,10 @@ export const PAGE_PERMISSIONS = {
   settings: 'settings:view',
 };
 
-export const getPermissionsForRole = (role) => ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS.user;
+export const getPermissionsForRole = (role) => {
+  const normalizedRole = role === 'admin' ? 'super_admin' : role;
+  return ROLE_PERMISSIONS[normalizedRole] || ROLE_PERMISSIONS.user;
+};
 
 export const hasPermission = (role, permission) => {
   if (!permission) return true;

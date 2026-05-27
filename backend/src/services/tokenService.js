@@ -5,7 +5,8 @@ const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
 const getCookieOptions = () => ({
   httpOnly: true,
-  secure: String(process.env.COOKIE_SECURE || process.env.NODE_ENV === 'production') === 'true',
+  // In production enforce secure cookies. Allow overriding via COOKIE_SECURE env var ('true'/'false').
+  secure: (process.env.COOKIE_SECURE === 'true') || process.env.NODE_ENV === 'production',
   sameSite: process.env.COOKIE_SAME_SITE || 'lax',
   path: '/',
 });

@@ -13,14 +13,16 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
+  const resolvedParams = await Promise.resolve(params || {});
+  const slug = resolvedParams.slug;
   const posts = await fetchAllPublishedPosts().catch(() => []);
-  const tag = getUniqueTags(posts).find((item) => item.slug === params.slug);
+  const tag = getUniqueTags(posts).find((item) => item.slug === slug);
 
   if (!tag) {
     return createPageMetadata({
       title: 'Tag not found',
       description: 'The requested tag could not be found.',
-      pathname: `/tag/${params.slug}`,
+      pathname: `/tag/${slug}`,
       robots: { index: false, follow: false },
     });
   }
@@ -33,9 +35,12 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function TagPage({ params }) {
+  const resolvedParams = await Promise.resolve(params || {});
+  const slug = resolvedParams.slug;
+
   const posts = await fetchAllPublishedPosts().catch(() => []);
   const tags = getUniqueTags(posts);
-  const tag = tags.find((item) => item.slug === params.slug);
+  const tag = tags.find((item) => item.slug === slug);
 
   if (!tag) {
     notFound();

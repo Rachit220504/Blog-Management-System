@@ -14,14 +14,16 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
+  const resolvedParams = await Promise.resolve(params || {});
+  const slug = resolvedParams.slug;
   const posts = await fetchAllPublishedPosts().catch(() => []);
-  const author = getUniqueAuthors(posts).find((item) => item.slug === params.slug);
+  const author = getUniqueAuthors(posts).find((item) => item.slug === slug);
 
   if (!author) {
     return createPageMetadata({
       title: 'Author not found',
       description: 'The requested author could not be found.',
-      pathname: `/author/${params.slug}`,
+      pathname: `/author/${slug}`,
       robots: { index: false, follow: false },
     });
   }
@@ -34,9 +36,12 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function AuthorPage({ params }) {
+  const resolvedParams = await Promise.resolve(params || {});
+  const slug = resolvedParams.slug;
+
   const posts = await fetchAllPublishedPosts().catch(() => []);
   const authors = getUniqueAuthors(posts);
-  const author = authors.find((item) => item.slug === params.slug);
+  const author = authors.find((item) => item.slug === slug);
 
   if (!author) {
     notFound();

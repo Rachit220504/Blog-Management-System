@@ -19,11 +19,20 @@ const buildSEOFields = (payload = {}, existingPost = null) => {
   const seoTitle = payload.metaTitle || payload.title || existingPost?.metaTitle || existingPost?.title || '';
   const seoDescription = payload.metaDescription || payload.excerpt || payload.summary || existingPost?.metaDescription || existingPost?.excerpt || existingPost?.summary || '';
   const image = payload.featureImage || payload.featuredImage || existingPost?.featureImage || existingPost?.featuredImage || '';
+  // Normalize canonicalUrl: accept relative URLs (e.g. '/blog/slug') and convert to absolute using FRONTEND_URL
+  let canonical = payload.canonicalUrl !== undefined ? payload.canonicalUrl : existingPost?.canonicalUrl || '';
+  try {
+    if (canonical && String(canonical).startsWith('/') && process.env.FRONTEND_URL) {
+      canonical = `${process.env.FRONTEND_URL.replace(/\/$/, '')}${canonical}`;
+    }
+  } catch (e) {
+    // If normalization fails, leave canonical as-is and let later validation handle it
+  }
 
   return {
     metaTitle: payload.metaTitle !== undefined ? payload.metaTitle : existingPost?.metaTitle || seoTitle,
     metaDescription: payload.metaDescription !== undefined ? payload.metaDescription : existingPost?.metaDescription || seoDescription,
-    canonicalUrl: payload.canonicalUrl !== undefined ? payload.canonicalUrl : existingPost?.canonicalUrl || '',
+    canonicalUrl: canonical !== undefined ? canonical : '',
     featureImage: image,
     featuredImage: image,
     ogTitle: payload.ogTitle !== undefined ? payload.ogTitle : existingPost?.ogTitle || seoTitle,

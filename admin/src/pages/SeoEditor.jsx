@@ -6,7 +6,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import FormField, { inputClass } from '../components/ui/FormField';
 import SeoScoreCard from '../components/blog/SeoScoreCard';
-import { seoScoreFromPost, splitList, slugify } from '../utils/content';
+import { buildCanonicalUrlFromTitle, buildSlugFromText, isAutoCanonicalUrlManaged, resolveCanonicalUrl, resolveSlug, seoScoreFromPost, splitList, slugify } from '../utils/content';
 import { validateSeoForm } from '../utils/validators';
 import Badge from '../components/ui/Badge';
 import toast from 'react-hot-toast';
@@ -34,12 +34,12 @@ const SeoEditor = () => {
     if (post) {
       setForm({
         title: post.title || '',
-        slug: post.slug || '',
+        slug: post.slug || buildSlugFromText(post.metaTitle || post.title),
         summary: post.summary || post.excerpt || '',
         featuredImage: post.featuredImage || post.featureImage || '',
         metaTitle: post.metaTitle || '',
         metaDescription: post.metaDescription || '',
-        canonicalUrl: post.canonicalUrl || '',
+        canonicalUrl: post.canonicalUrl || buildCanonicalUrlFromTitle(post.metaTitle || post.title),
         keywords: (post.keywords || []).join(', '),
         ogTitle: post.ogTitle || '',
         ogDescription: post.ogDescription || '',
@@ -47,6 +47,28 @@ const SeoEditor = () => {
       });
     }
   }, [selectedPostQuery.data]);
+
+  const handleMetaTitleChange = (event) => {
+    const nextMetaTitle = event.target.value;
+
+    setForm((current) => {
+      const nextState = {
+        ...current,
+        metaTitle: nextMetaTitle,
+        slug: buildSlugFromText(nextMetaTitle || current.title),
+        canonicalUrl: buildCanonicalUrlFromTitle(nextMetaTitle || current.title),
+      };
+
+      return nextState;
+    });
+  };
+
+  const handleCanonicalChange = (event) => {
+    setForm((current) => ({
+      ...current,
+      canonicalUrl: event.target.value,
+    }));
+  };
 
   const seoScore = useMemo(() => seoScoreFromPost({
     title: form.title,
@@ -61,10 +83,18 @@ const SeoEditor = () => {
   const saveMutation = useMutation({
     mutationFn: async () => postsApi.update(selectedId, {
       ...(selectedPostQuery.data || {}),
-      slug: slugify(form.slug || form.title),
+      slug: resolveSlug({
+        slug: form.slug,
+        title: form.title,
+        metaTitle: form.metaTitle || form.title,
+      }),
       metaTitle: form.metaTitle || form.title,
       metaDescription: form.metaDescription || form.summary,
-      canonicalUrl: form.canonicalUrl,
+      canonicalUrl: resolveCanonicalUrl({
+        canonicalUrl: form.canonicalUrl,
+        metaTitle: form.metaTitle || form.title,
+        title: form.title,
+      }),
       keywords: splitList(form.keywords),
       ogTitle: form.ogTitle || form.metaTitle || form.title,
       ogDescription: form.ogDescription || form.metaDescription || form.summary,
@@ -84,6 +114,10 @@ const SeoEditor = () => {
     { label: 'Canonical URL', pass: Boolean(form.canonicalUrl) },
     { label: 'Keywords', pass: splitList(form.keywords).length > 0 },
   ];
+
+  const canonicalStatus = isAutoCanonicalUrlManaged(form.canonicalUrl, [form.metaTitle, form.title])
+    ? `Auto-generated from ${form.metaTitle ? 'meta title' : 'title'}`
+    : 'Manually edited';
 
   const handleSubmit = () => {
     const formErrors = validateSeoForm(form);
@@ -139,10 +173,10 @@ const SeoEditor = () => {
           <Card className="p-5">
             <div className="grid gap-4 lg:grid-cols-2">
               <FormField label="Meta Title" error={errors.metaTitle} required>
-                <input value={form.metaTitle} onChange={(event) => setForm((current) => ({ ...current, metaTitle: event.target.value }))} className={inputClass} />
+                <input value={form.metaTitle} onChange={handleMetaTitleChange} className={inputClass} />
               </FormField>
-              <FormField label="Canonical URL" error={errors.canonicalUrl}>
-                <input value={form.canonicalUrl} onChange={(event) => setForm((current) => ({ ...current, canonicalUrl: event.target.value }))} className={inputClass} />
+              <FormField label="Canonical URL" error={errors.canonicalUrl} hint={canonicalStatus}>
+                <input value={form.canonicalUrl} onChange={handleCanonicalChange} className={inputClass} />
               </FormField>
               <FormField label="Meta Description" error={errors.metaDescription} required>
                 <textarea rows={4} value={form.metaDescription} onChange={(event) => setForm((current) => ({ ...current, metaDescription: event.target.value }))} className={inputClass} />

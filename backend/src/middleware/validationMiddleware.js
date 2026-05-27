@@ -140,7 +140,10 @@ const validatePostPayload = (req, res, next) => {
   }
 
   if (canonicalUrl !== undefined && canonicalUrl && !validator.isURL(String(canonicalUrl), { require_protocol: true })) {
-    return sendValidationError(res, 'Canonical URL must be a valid URL');
+    // Allow relative canonical URLs (starting with '/') — they'll be normalized server-side.
+    if (!String(canonicalUrl).startsWith('/')) {
+      return sendValidationError(res, 'Canonical URL must be a valid URL');
+    }
   }
 
   if (!validateSeoString(ogTitle, 70)) {
